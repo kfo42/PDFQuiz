@@ -1,3 +1,9 @@
+Before running PDFQuiz, run
+```
+npm i
+```
+from within both the `api` and `pdf-quiz` folders.
+
 To run PDFQuiz locally, run
 ```
 npm start
