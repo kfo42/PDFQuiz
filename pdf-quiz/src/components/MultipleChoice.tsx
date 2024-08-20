@@ -44,9 +44,13 @@ class Joke extends React.Component<Props, State> {
 
         if (questionsAndAnswers) {
             for (let i = 0; i < questionsAndAnswers.length; i++) {
-                let splitPair = questionsAndAnswers[i].split("a)");
-                separateQuestions[i] = splitPair[0].split('?')[0] + "?";
-                separateAnswers[i] = "a)" + splitPair[1];
+                if (i < 5) {
+                    let splitPair = questionsAndAnswers[i].split("a)");
+                    separateQuestions[i] = splitPair[0].split('?')[0] + "?";
+                    separateAnswers[i] = "a)" + splitPair[1];
+                } else {
+                    separateQuestions[i] = questionsAndAnswers[i];
+                }
             }
             let splitResponse;
             console.log(separateQuestions);
@@ -123,7 +127,7 @@ class Joke extends React.Component<Props, State> {
         console.log("Joke Quiz");
         setTimeout(async () => {
             await this.getQuiz();
-        }, 300);
+        }, 1000);
     }
 
     componentWillUnmount() {

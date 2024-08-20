@@ -15,7 +15,7 @@ async function gradeQuiz(sampleText) {
 async function createMultipleChoiceQuiz(sampleText) {
   const message = await client.messages.create({
     max_tokens: 1024,
-    messages: [{ role: 'user', content: 'Create 5 multiple-choice joke questions (followed by a list of answers) for a comedic quiz based on the following text: ' + sampleText }],
+    messages: [{ role: 'user', content: 'Create 5 multiple-choice joke questions followed by a set of 5 correct answers for a comedic quiz based on the following text: ' + sampleText }],
     model: 'claude-3-opus-20240229',
   });
   return message.content;
