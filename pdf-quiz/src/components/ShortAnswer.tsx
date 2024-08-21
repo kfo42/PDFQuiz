@@ -61,9 +61,9 @@ const ShortAnswer: React.FC<Props> = ({ text, title }) => {
         setPercentage(extractedPercentage[0]);
     };
 
-    const setQuestionRef = (index: number) => (el: HTMLInputElement | null) => {
+    const setShortAnswerQuestionRef = useCallback((index: number) => (el: HTMLInputElement | null) => {
         questionRefs.current[index] = el;
-    };
+    }, []);
 
     interface ShortAnswerBlockProps {
         questionText: string;
@@ -74,7 +74,7 @@ const ShortAnswer: React.FC<Props> = ({ text, title }) => {
         <div key={questionIndex} >
             <p className="question-text">{questionText}</p>
             <label className="answer-text">
-                Your answer: <input ref={setQuestionRef(questionIndex)} />
+                Your answer: <input ref={setShortAnswerQuestionRef(questionIndex)} />
             </label>
             <hr />
         </div>

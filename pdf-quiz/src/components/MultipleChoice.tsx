@@ -74,12 +74,12 @@ const MultipleChoice: React.FC<Props> = ({ text, title, quizType }) => {
         return selectedAnswers;
     };
 
-    const setQuestionRef = (index: number, answerIndex: number) => (el: any) => {
+    const setMultipleChoiceQuestionRef = useCallback((index: number, answerIndex: number) => (el: any) => {
         if (!questionRefs.current[index]) {
             questionRefs.current[index] = [];
         }
         questionRefs.current[index][answerIndex] = el;
-    };
+    }, []);
 
     interface MultipleChoiceAnswerProps {
         questionIndex: number;
@@ -92,7 +92,7 @@ const MultipleChoice: React.FC<Props> = ({ text, title, quizType }) => {
             <input
                 type="radio"
                 value={String.fromCharCode(97 + answerIndex)}
-                ref={setQuestionRef(questionIndex, answerIndex)}
+                ref={setMultipleChoiceQuestionRef(questionIndex, answerIndex)}
             />
             <label
                 htmlFor={`question${questionIndex + 1}_answer${answerIndex + 1}`}
