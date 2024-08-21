@@ -1,0 +1,28 @@
+.question-container {
+    text-align: left;
+    flex-direction: column;
+    margin: 0 20px; 
+}
+
+.question-text {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.answer-container {
+    align-items: center;
+    margin: 0 20px; 
+}
+
+
+.answer-text {
+    margin-left: 5px;
+    font-size: 18px;
+}
+
+.button {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    width: 100%
+}

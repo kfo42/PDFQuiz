@@ -1,40 +1,30 @@
-import React from "react";
-import { text } from "stream/consumers";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { postRequest } from '../utils/apiUtils';
+import { parseQuestionsAndAnswers } from '../utils/stringUtils';
 
-export interface Props {
+import '../styles/Quiz.css';
+
+interface Props {
     text: string;
     title: string;
-};
+}
 
-export interface State {
-    quiz: string;
-    questions: string[];
-    answers: string[];
-    finalGrade: string;
-};
+const ShortAnswer: React.FC<Props> = ({ text, title }) => {
+    const [quiz, setQuiz] = useState("Loading, please wait...");
+    const [questions, setQuestions] = useState<string[]>([]);
+    const [finalGrade, setFinalGrade] = useState(["Loading"]);
+    const [correctAnswers, setCorrectAnswers] = useState("");
+    const [percentage, setPercentage] = useState(0);
 
-class ShortAnswer extends React.Component<Props, State> {
-    state: State = {
-        quiz: "Loading, please wait...",
-        questions: [],
-        answers: [],
-        finalGrade: "Loading"
-    };
+    const formattedTitle = title.substring(0, title.length - 4);
+    const questionRefs = useRef<(HTMLInputElement | null)[]>([]);
 
 
-    convertQuizToLinks = async (rawText: string) => {
-        let removeIntro = rawText.substring(rawText.indexOf("1."));
-        await this.setState({ quiz: removeIntro });
-        let cleanQuestions = await removeIntro.replaceAll("\\n", "");
-        let noSlash = await cleanQuestions.replaceAll("\\", "");
-        await this.setState({ quiz: noSlash });
-        let regex = /(\d+\.\d*)\s?(.*?)(?=\d+\.|$)/gs;
+    const convertQuizToLinks = async (rawText: string) => {
+        const questionsAndAnswers = parseQuestionsAndAnswers(rawText);
 
-        let questionsAndAnswers = noSlash.match(regex);
-        console.log(questionsAndAnswers);
-
-        let separateQuestions = [];
-        let separateAnswers = [];
+        let separateQuestions: string[] = [];
+        let separateAnswers: string[] = [];
 
         if (questionsAndAnswers) {
             for (let i = 0; i < questionsAndAnswers.length; i++) {
@@ -43,125 +33,76 @@ class ShortAnswer extends React.Component<Props, State> {
                 separateAnswers[i] = splitPair[1];
             }
         }
-        await this.setState({ questions: separateQuestions, answers: separateAnswers })
-    }
+        const separateResponses = separateQuestions.slice(5).join(",");
 
-    getQuiz = async () => {
-        console.log("getQuiz");
-
-
-        const fetchData = await fetch('http://localhost:3001/processQuiz',
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    category: "short-answer",
-                    pdfText: this.props.text
-                }),
-                headers: new Headers({
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                })
-            }
-        );
-        const textData = await fetchData.text();
-        await console.log(textData);
-        const quizText = await JSON.stringify(textData);
-
-        await this.setState({ quiz: quizText });
-        await this.convertQuizToLinks(quizText);
+        setQuestions(separateQuestions.slice(0, 5));
+        setCorrectAnswers(separateResponses);
     };
 
-
-    gradeQuiz = async () => {
-        let correctAnswers = "CORRECT ANSWERS: " + this.state.answers.toString();
-        let output = "USER ANSWERS: " + (document.getElementById("question1") as HTMLInputElement).value
-            + ", " + (document.getElementById("question2") as HTMLInputElement).value
-            + ", " + (document.getElementById("question3") as HTMLInputElement).value
-            + ", " + (document.getElementById("question4") as HTMLInputElement).value
-            + ", " + (document.getElementById("question5") as HTMLInputElement).value;
-
-        const fetchData = await fetch('http://localhost:3001/processQuiz',
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    category: "grade-quiz",
-                    pdfText: this.state.questions.toString() + correctAnswers + output
-                }),
-                headers: new Headers({
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                })
-            }
-        );
-        const textData = await fetchData.text();
-        await console.log(textData);
-        const quizText = await JSON.stringify(textData);
-        let cleanQuestions = await quizText.replaceAll("\\n", "");
-        let noSlash = await cleanQuestions.replaceAll("\\", "");
-
-        await this.setState({ finalGrade: noSlash });
-
+    const getQuiz = async () => {
+        const rawQuizText = await postRequest("short-answer", text)
+        const textData = await rawQuizText.text();
+        await convertQuizToLinks(textData);
+        setQuiz("quiz ready");
     };
 
+    const gradeQuiz = async () => {
+        let correctAnswersProvided = "CORRECT ANSWERS: " + correctAnswers.toString();
+        let output = "USER ANSWERS: " + questionRefs.current.map(ref => ref?.value ?? "").join(", ");
+        const rawQuizText = await postRequest("grade-quiz", questions.toString() + correctAnswersProvided + output)
 
-    async componentDidMount() {
-        console.log("Short Answer");
-        setTimeout(async () => {
-            await this.getQuiz();
-        }, 1000);
-    }
+        const textData = await rawQuizText.json();
+        const formattedResponse = textData[0].text.split('\n').filter((line: string) => line.trim() !== '');
+        console.log(formattedResponse);
 
-    componentWillUnmount() {
-    }
+        setFinalGrade(formattedResponse);
+        const extractedPercentage = textData[0].text.match(/(\d{1,3}(\.\d+)?)%/);
+        console.log("percentage:" + extractedPercentage);
+        setPercentage(extractedPercentage[0]);
+    };
 
+    useEffect(() => {
+        console.log("Short-Answer Quiz");
+        getQuiz();
+    }, []);
 
-    render() {
-        return (
-            <nav>
-                <h1 className="h1">Short Answer Quiz on <b>{this.props.title.substring(0, this.props.title.length - 4)}</b></h1>
+    return (
+        <div>
+            <h3>Short-Answer Quiz on <b>{formattedTitle}</b>
+            </h3>
 
-                {(this.state.quiz === "Loading, please wait...") &&
-                    <p className="h1">{this.state.quiz}</p>
-                }
-                {(this.state.quiz !== "Loading, please wait...") &&
-
-                    <div>
-                        <form action="">
-                            <p>{this.state.questions[0]}</p>
-                            <label>
-                                Your answer: <input id="question1" />
+            {quiz === "Loading, please wait..." ? (
+                <p className="h1">{quiz}</p>
+            ) : (
+                <div className="question-container">
+                    {questions.map((question, index) => (
+                        <div key={index} >
+                            <p className="question-text">{question}</p>
+                            <label className="answer-text">
+                                Your answer: <input ref={el => questionRefs.current[index] = el!} />
                             </label>
                             <hr />
-                            <p>{this.state.questions[1]}</p>
-                            <label>
-                                Your answer: <input id="question2" />
-                            </label>
-                            <hr />
-                            <p>{this.state.questions[2]}</p>
-                            <label>
-                                Your answer: <input id="question3" />
-                            </label>
-                            <hr />
-                            <p>{this.state.questions[3]}</p>
-                            <label>
-                                Your answer: <input id="question4" />
-                            </label>
-                            <hr />
-                            <p>{this.state.questions[4]}</p>
-                            <label>
-                                Your answer: <input id="question5" />
-                            </label>
-                            <hr />
-                        </form>
-                        <button style={{ marginTop: "30px" }} onClick={() => this.gradeQuiz()}> Grade your quiz.</button>
-                        {(this.state.finalGrade !== "Loading grade") &&
-                            <p className="h1">{this.state.finalGrade}</p>
+                        </div>
+                    ))}
+                    <div className="question-container">
+                        <button style={{ marginTop: "30px", marginBottom: "30px" }} onClick={gradeQuiz}>
+                            Grade your quiz.
+                        </button>
+                        {finalGrade.length > 1 &&
+                            <h3 className="h3">
+                                Your score: {percentage}
+                            </h3>
                         }
-                    </div>
-                }
-            </nav>
-        )
-    }
-}
 
-export default ShortAnswer
+                        {finalGrade.length > 1 && finalGrade.map((line, index) => (
+                            <p className="answer-text" key={index}>{line}</p>
+                        ))}
+                    </div>
+
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ShortAnswer;
