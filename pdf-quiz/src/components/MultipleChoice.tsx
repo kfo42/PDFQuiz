@@ -81,6 +81,47 @@ const MultipleChoice: React.FC<Props> = ({ text, title, quizType }) => {
         questionRefs.current[index][answerIndex] = el;
     };
 
+    interface MultipleChoiceAnswerProps {
+        questionIndex: number;
+        answerIndex: number;
+        answerText: string;
+    }
+
+    const MultipleChoiceAnswer: React.FC<MultipleChoiceAnswerProps> = ({ questionIndex, answerIndex, answerText }) => (
+        <div className="answer-container">
+            <input
+                type="radio"
+                value={String.fromCharCode(97 + answerIndex)}
+                ref={setQuestionRef(questionIndex, answerIndex)}
+            />
+            <label
+                htmlFor={`question${questionIndex + 1}_answer${answerIndex + 1}`}
+                className="answer-text"
+            >
+                {answerText}
+            </label>
+        </div>
+    );
+
+    interface MultipleChoiceQuestionProps {
+        questionIndex: number;
+        questionText: string;
+    }
+
+    const MultipleChoiceQuestion: React.FC<MultipleChoiceQuestionProps> = ({ questionIndex, questionText }) => (
+        <div>
+            <p className="question-text">{questionText}</p>
+            {answers[questionIndex].map((answerText, answerIndex) => (
+                <MultipleChoiceAnswer
+                    questionIndex={questionIndex}
+                    answerIndex={answerIndex}
+                    answerText={answerText}
+                />
+            ))}
+            <hr />
+        </div>
+    );
+
     useEffect(() => {
         console.log("Multiple-Choice Quiz");
         getQuiz();
@@ -95,26 +136,11 @@ const MultipleChoice: React.FC<Props> = ({ text, title, quizType }) => {
                 <p className="h1">{quiz}</p>
             ) : (
                 <div className="question-container">
-                    {questions.map((question, index) => (
-                        <div key={index}>
-                            <p className="question-text">{question}</p>
-                            {answers[index].map((answer, answerIndex) => (
-                                <div key={answerIndex} className="answer-container">
-                                    <input
-                                        type="radio"
-                                        value={String.fromCharCode(97 + answerIndex)}
-                                        ref={setQuestionRef(index, answerIndex)}
-                                    />
-                                    <label
-                                        htmlFor={`question${index + 1}_answer${answerIndex + 1}`}
-                                        className="answer-text"
-                                    >
-                                        {answer}
-                                    </label>
-                                </div>
-                            ))}
-                            <hr />
-                        </div>
+                    {questions.map((questionText, questionIndex) => (
+                        <MultipleChoiceQuestion
+                            questionIndex={questionIndex}
+                            questionText={questionText}
+                        />
                     ))}
                     <button className="question-container" onClick={gradeQuiz}>
                         Grade your quiz.

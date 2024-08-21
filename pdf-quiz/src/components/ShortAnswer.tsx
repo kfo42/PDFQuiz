@@ -4,7 +4,7 @@ import { parseQuestionsAndAnswers } from '../utils/stringUtils';
 
 import '../styles/Quiz.css';
 
-interface Props {
+export interface Props {
     text: string;
     title: string;
 }
@@ -29,7 +29,7 @@ const ShortAnswer: React.FC<Props> = ({ text, title }) => {
         if (questionsAndAnswers) {
             for (let i = 0; i < questionsAndAnswers.length; i++) {
                 let splitPair = questionsAndAnswers[i].split("Answer:");
-                separateQuestions[i] = splitPair[0].split('?')[0] + "?";
+                separateQuestions[i] = splitPair[0].split('?')[0].replace("ANSWERS:", "") + "?";
                 separateAnswers[i] = splitPair[1];
             }
         }
@@ -61,6 +61,26 @@ const ShortAnswer: React.FC<Props> = ({ text, title }) => {
         setPercentage(extractedPercentage[0]);
     };
 
+    const setQuestionRef = (index: number) => (el: HTMLInputElement | null) => {
+        questionRefs.current[index] = el;
+    };
+
+    interface ShortAnswerBlockProps {
+        questionText: string;
+        questionIndex: number;
+    }
+
+    const ShortAnswerBlock: React.FC<ShortAnswerBlockProps> = ({ questionText, questionIndex }) => (
+        <div key={questionIndex} >
+            <p className="question-text">{questionText}</p>
+            <label className="answer-text">
+                Your answer: <input ref={setQuestionRef(questionIndex)} />
+            </label>
+            <hr />
+        </div>
+    );
+
+
     useEffect(() => {
         console.log("Short-Answer Quiz");
         getQuiz();
@@ -75,14 +95,11 @@ const ShortAnswer: React.FC<Props> = ({ text, title }) => {
                 <p className="h1">{quiz}</p>
             ) : (
                 <div className="question-container">
-                    {questions.map((question, index) => (
-                        <div key={index} >
-                            <p className="question-text">{question}</p>
-                            <label className="answer-text">
-                                Your answer: <input ref={el => questionRefs.current[index] = el!} />
-                            </label>
-                            <hr />
-                        </div>
+                    {questions.map((questionText, questionIndex) => (
+                        <ShortAnswerBlock
+                            questionText={questionText}
+                            questionIndex={questionIndex}
+                        />
                     ))}
                     <div className="question-container">
                         <button style={{ marginTop: "30px", marginBottom: "30px" }} onClick={gradeQuiz}>
